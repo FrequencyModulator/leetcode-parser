@@ -29,9 +29,9 @@ namespace Scraper
 
             var scraper = serviceProvider.GetRequiredService<Scraper>();
 
-            //await scraper.UpdateAllCompanySheetsQuestionsAsync();
+            await scraper.UpdateAllCompanySheetsQuestionsAsync();
             await scraper.UpdateAllLastSubmittedAsync();
-            await scraper.UpdateMergedView();
+            //await scraper.UpdateMergedView();
             //await scraper.SyncSubmissionsAsync();
             Log.Information("Leetcode scraper finished");
         }   
