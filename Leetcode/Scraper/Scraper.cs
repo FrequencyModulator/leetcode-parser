@@ -15,6 +15,8 @@ namespace Scraper
 {
     public class Scraper
     {
+		private const string HyperlinkSlug = "=HYPERLINK(\"https://leetcode.com/problems/{0}\", \"{0}\")";
+
         private readonly GoogleSpreadsheetClient _googleSpreadsheetClient;
         private readonly LeetcodeClient _leetcodeClient;
         private readonly ISubmissionSync _submissionSync;
@@ -229,7 +231,7 @@ namespace Scraper
                         Frequency1Year = (int)x.Frequencies[1],
                         Frequency2Years = (int)x.Frequencies[2],
                         FrequencyAllTime = (int)x.Frequencies[3],
-                        Slug = x.Question.TitleSlug,
+                        Slug = string.Format(HyperlinkSlug, x.Question.TitleSlug),
                         Tags = string.Join(", ", x.Question.TopicTags.Select(y => y.Name))
                     })
                 .ToList();

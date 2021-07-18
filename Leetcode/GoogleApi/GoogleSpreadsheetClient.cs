@@ -188,7 +188,7 @@ namespace GoogleApi
             AddNumericCell(cells, question.Frequency1Year);
             AddNumericCell(cells, question.Frequency2Years);
             AddNumericCell(cells, question.FrequencyAllTime);
-            AddTextCell(cells, question.Slug);
+            AddFormulaCell(cells, question.Slug);
             AddTextCell(cells, question.Tags);
 
             if (question.AddedDateTime.HasValue)
@@ -230,6 +230,12 @@ namespace GoogleApi
                 UserEnteredValue = new ExtendedValue { NumberValue = diff },
                 UserEnteredFormat = new CellFormat { NumberFormat = new NumberFormat { Type = "DATE" } }
             };
+            cells.Add(cellData);
+        }
+
+        private static void AddFormulaCell(List<CellData> cells, string value)
+        {
+            var cellData = new CellData { UserEnteredValue = new ExtendedValue { FormulaValue = value } };
             cells.Add(cellData);
         }
 
