@@ -4,8 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Scraper.Abstractions;
 using Serilog;
-using SubmissionSync;
-using System;
 using System.Threading.Tasks;
 
 namespace Scraper
@@ -26,43 +24,58 @@ namespace Scraper
 
             Log.Information("Leetcode scraper started");
             var serviceProvider = BuildServiceProvider();
+            
+            //var client = serviceProvider.GetService<GoogleSpreadsheetClient>();
+
+            //var names = await client.GetSheetNames();
+
+            //foreach (var name in names)
+            //{
+            //    Console.WriteLine(name);
+            //}
 
             var scraper = serviceProvider.GetRequiredService<Scraper>();
 
-            //await scraper.UpdateAllCompanySheetsQuestionsAsync();
-            await scraper.UpdateAllLastSubmittedAsync();
-            //await scraper.UpdateMergedView();
-            //await scraper.SyncSubmissionsAsync();
-            Log.Information("Leetcode scraper finished");
-        }   
+            await scraper.UpdateAllCompanySheetsQuestionsAsync();
+            
+            //await scraper.UpdateAllLastSubmittedAsync();
+
+            //Log.Information("Leetcode scraper finished");
+        }
+
+        //private static CommandLineBuilder BuildCommandLine()
+        //{
+        //    var root = new RootCommand(@"$ dotnet run --name 'Joe'"){
+        //        new Option<string>("--name"){
+        //            IsRequired = true
+        //        }
+        //    };
+        //    root.Handler = CommandHandler.Create<GreeterOptions, IHost>(Run);
+        //    return new CommandLineBuilder(root);
+        //}
 
         public static ServiceProvider BuildServiceProvider()
         {
             var services = new ServiceCollection();
 
+            services.AddSingleton<IConfiguration>(Configuration);
             services.AddLogging(builder => builder.AddSerilog());
 
-            services.AddSingleton(Configuration.GetSection("GoogleApi").Get<GoogleSpreadsheetClientConfiguration>());
-            services.AddSingleton<GoogleSpreadsheetClient>();
-
-            services.AddSingleton(Configuration.GetSection("LeetcodeApi").Get<LeetcodeClientConfiguration>());
-            services.AddSingleton<LeetcodeClient>();
-
-            services.AddSingleton(Configuration.GetSection("SubmissionSync").Get<SubmissionSyncConfiguration>());
-            services.AddSingleton<ISubmissionSync, FolderSync>();
-
-            services.AddSingleton<ConfigurationCompanyProvider>();
-            services.AddSingleton<SheetTitleCompanyProvider>();
-            services.AddSingleton<ICompanyProvider>(sp =>
+            services.AddSingleton(sp =>
             {
-                var companyProvider = Configuration.GetValue<string>("LeetcodeApi:CompaniesProvider");
-
-                if (string.Equals(companyProvider, "SpreadsheetTabTitles", StringComparison.OrdinalIgnoreCase))
-                    return sp.GetRequiredService<SheetTitleCompanyProvider>();
-
-                return sp.GetRequiredService<ConfigurationCompanyProvider>();
+                var config = Configuration.GetSection("GoogleApi").Get<GoogleSpreadsheetClientConfiguration>();
+                return new GoogleSpreadsheetClient(config);
             });
 
+            services.AddSingleton(sp =>
+            {
+                var config = Configuration.GetSection("LeetcodeApi").Get<LeetcodeClientConfiguration>();
+                return new LeetcodeClient(config);
+            });
+
+            //services.AddSingleton<ICompanyProvider, ConfigurationCompanyProvider>();
+
+            services.AddSingleton<ICompanyProvider, SheetTitleCompanyProvider>();
             services.AddSingleton<Scraper>();
 
             return services.BuildServiceProvider();

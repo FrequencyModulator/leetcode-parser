@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Scraper.Abstractions;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
-namespace Scraper
+namespace Scraper.Abstractions
 {
     public class ConfigurationCompanyProvider : ICompanyProvider
     {
@@ -14,12 +14,13 @@ namespace Scraper
             _configuration = configuration;
         }
 
-        public IAsyncEnumerable<string> GetCompanies() =>
-            _configuration
-                .GetSection("LeetcodeApi:Companies")
-                .AsEnumerable()
-                .Where(c => !string.IsNullOrEmpty(c.Value))
-                .Select(c => c.Value)
-                .ToAsyncEnumerable();
+        public Task<IEnumerable<string>> GetCompanies() =>
+            Task.FromResult(
+                _configuration
+                    .GetSection("LeetcodeApi:Companies")
+                    .AsEnumerable()
+                    .Where(c => !string.IsNullOrEmpty(c.Value))
+                    .Select(c => c.Value)
+                );
     }
 }

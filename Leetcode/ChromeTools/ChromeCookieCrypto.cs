@@ -35,5 +35,13 @@ namespace ChromeTools
 
             return Encoding.Default.GetString(plainText);
         }
+
+        internal static string Decrypt1(object message, byte[] key, int nonSecretPayloadLength = 3)
+        {
+            const int keyBitSize = 256;
+            if (key == null || key.Length != keyBitSize / 8)
+                throw new ArgumentException($"Key needs to be {keyBitSize} bit!", nameof(key));
+            return null;
+        }
     }
 }

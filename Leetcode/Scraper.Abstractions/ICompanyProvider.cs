@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Scraper.Abstractions
 {
     public interface ICompanyProvider
     {
-        IAsyncEnumerable<string> GetCompanies();
+        Task<IEnumerable<string>> GetCompanies();
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Scraper.Abstractions;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace GoogleApi
 {
@@ -13,7 +13,7 @@ namespace GoogleApi
             _client = client;
         }
 
-        public IAsyncEnumerable<string> GetCompanies()
-            => _client.GetSheetNames().Where(s => !s.StartsWith("["));
+        public Task<IEnumerable<string>> GetCompanies() 
+            => _client.GetSheetNames();
     }
 }

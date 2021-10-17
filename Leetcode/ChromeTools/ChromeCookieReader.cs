@@ -28,7 +28,7 @@ namespace ChromeTools
                 throw new ArgumentNullException(nameof(hostName));
 
             using var connection = new SqliteConnection(_connectionString);
-            const string query = "SELECT name, encrypted_value FROM cookies WHERE host_key like @hostName and name not in ('__cfduid', 'c_a_u', '__cf_bm', 'messages', '__atuvc', '__stripe_mid')";
+            const string query = "SELECT name, encrypted_value FROM cookies WHERE host_key like @hostName and name <> '__cfduid'";
             return connection.Query<(string name, byte[] encrypted)>(query, new { hostName = $"%{hostName}%" })
                 .Select(n => (n.name, value: Decrypt(n.encrypted, _encryptionKey)))
                 .ToDictionary(k => k.name, v => v.value);

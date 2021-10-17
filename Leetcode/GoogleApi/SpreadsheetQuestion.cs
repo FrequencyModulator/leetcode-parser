@@ -28,11 +28,8 @@ namespace GoogleApi
 
         public string Tags { get; set; }
 
-        public string Companies { get; set; } = "";
-
         public DateTime? AddedDateTime { get; set; }
 
         public DateTime? LastSubmittedDateTime { get; set; }
-        public int? DuplicatesCount { get; set; }
     }
 }

@@ -1,91 +1,41 @@
-﻿using GoogleApi;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using GoogleApi;
 using LeetcodeApi;
 using LeetcodeApi.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Scraper.Abstractions;
-using SubmissionSync;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Threading.Tasks;
 
 namespace Scraper
 {
-    public class Scraper
+	public class Scraper
     {
-		private const string HyperlinkSlug = "=HYPERLINK(\"https://leetcode.com/problems/{0}\", \"{0}\")";
+        private const string HyperlinkSlug = "=HYPERLINK(\"https://leetcode.com/problems/{0}\", \"{0}\")";
 
         private readonly GoogleSpreadsheetClient _googleSpreadsheetClient;
         private readonly LeetcodeClient _leetcodeClient;
-        private readonly ISubmissionSync _submissionSync;
         private readonly ICompanyProvider _companyProvider;
         private readonly ILogger<Scraper> _logger;
 
         public Scraper(
             GoogleSpreadsheetClient googleSpreadsheetClient,
             LeetcodeClient leetcodeClient,
-            ISubmissionSync submissionSync,
             ICompanyProvider companyProvider,
             ILogger<Scraper> logger)
         {
             _googleSpreadsheetClient = googleSpreadsheetClient;
             _leetcodeClient = leetcodeClient;
-            _submissionSync = submissionSync;
             _companyProvider = companyProvider;
             _logger = logger;
         }
 
-        public Task SyncSubmissionsAsync()
-            => _submissionSync.SyncSubmissionsAsync();
-
-        public async Task UpdateMergedView()
-        {            
-            var companies = new HashSet<string> { "Uber", "Facebook" };
-            _logger.LogInformation("Merging companies {companies}.", companies);
-
-            var merged = new Dictionary<string, SpreadsheetQuestion>();            
-            foreach (var company in companies)
-            {
-                _logger.LogInformation("Merging company {company}.", company);
-                var companySheet = await _googleSpreadsheetClient.LoadCompanySheet(company);
-                foreach (var question in companySheet.Questions)
-                {
-                    question.Companies += company + ", ";
-                    if (merged.TryGetValue(question.Slug, out var q))
-                    {
-                        q.Frequency6Months += question.Frequency6Months;
-                        q.Frequency1Year += question.Frequency1Year;
-                        q.Frequency2Years += question.Frequency2Years;
-                        q.FrequencyAllTime += question.FrequencyAllTime;
-                        q.DuplicatesCount++;
-                    }
-                    else
-                    {
-                        question.DuplicatesCount = 1;
-                        merged[question.Slug] = question;
-                    }
-                }                                
-            }
-
-            var mergedCompany = new CompanySheet
-            {
-                Title = $"[Merged] {string.Join(',', companies)}",
-                Questions = merged.Values.ToList()                    
-            };
-
-                                    
-            _logger.LogInformation("Updating merged spreadsheet for {companies}.", companies);
-
-            var mergedCompanySheet = await _googleSpreadsheetClient.LoadCompanySheet(mergedCompany.Title);
-            await _googleSpreadsheetClient.UpdateQuestionsAsync(mergedCompany.Questions, mergedCompanySheet.SheetId);                       
-        }
-
         public async Task UpdateAllLastSubmittedAsync()
         {
-            var companies = _companyProvider.GetCompanies();
-            await foreach (var company in companies)
+            var companies = await _companyProvider.GetCompanies();
+            foreach (var company in companies)
                 await UpdateLastSubmittedAsync(company);
         }
 
@@ -94,7 +44,7 @@ namespace Scraper
             _logger.LogInformation("Updating last submitted dates for {company}.", company);
             var companySheet = await _googleSpreadsheetClient.LoadCompanySheet(company);
             var spreadsheetQuestions = companySheet.Questions;
-            var lastSyncSubmissionDateTime = spreadsheetQuestions.Max(x => x.LastSubmittedDateTime) ?? DateTime.Now.AddMonths(-1);
+            var lastSyncSubmissionDateTime = spreadsheetQuestions.Max(x => x.LastSubmittedDateTime) ?? DateTime.Now.AddMonths(-4);
             _logger.LogInformation("Last sync submission date: {date}.", lastSyncSubmissionDateTime);
 
             var submissionSummaries = await _leetcodeClient.GetSubmissionSummariesAsync(lastSyncSubmissionDateTime);
@@ -102,6 +52,16 @@ namespace Scraper
 
             if (!submissionSummaries.Any())
                 return;
+
+            var dups = spreadsheetQuestions
+                .GroupBy(s => s.Title)
+                .Where(g => g.Count() > 1)
+                .SelectMany(q => q);
+
+            foreach (var dup in dups)
+            {
+                _logger.LogInformation("Found duplicates {id} {title}", dup.Id, dup.Title);
+            }
 
             var googleSpreadsheetQuestionsDictionary = spreadsheetQuestions.ToDictionary(x => x.Title);
 
@@ -116,12 +76,14 @@ namespace Scraper
                     companySheet.SheetId);
                 _logger.LogInformation("Updated the problem {title} with last submission date {date}", submissionSummary.QuestionTitle, submissionSummary.LastSubmittedDateTime);
             }
+
+            // await _googleSpreadsheetClient.SortRange();
         }
 
         public async Task UpdateAllCompanySheetsQuestionsAsync()
         {
-            var companies = _companyProvider.GetCompanies();
-            await foreach (var company in companies)
+            var companies = await _companyProvider.GetCompanies();
+            foreach (var company in companies)
                 await UpdateQuestionsAsync(company);
         }
 
@@ -130,8 +92,8 @@ namespace Scraper
             _logger.LogInformation("Loading {company} questions.", company);
             var companySheet = await _googleSpreadsheetClient.LoadCompanySheet(company);
             var oldSpreadsheetQuestions = companySheet.Questions;
-            EnsureNoDuplicates(oldSpreadsheetQuestions);
-            var oldSpreadsheetQuestionsDictionary = oldSpreadsheetQuestions.ToDictionary(x => x.Id);
+            var test = oldSpreadsheetQuestions.Where(x => x.Id == "1781");
+            var oldSpreadsheetQuestionsDictionary = oldSpreadsheetQuestions.Distinct().ToDictionary(x => x.Id);
 
             var companyTag = await _leetcodeClient.LoadCompanyTagAsync(company);
 
@@ -146,7 +108,6 @@ namespace Scraper
                 .ToList();
 
             await _googleSpreadsheetClient.UpdateQuestionsAsync(updatedQuestions, companySheet.SheetId);
-
             _logger.LogInformation("Updated questions: {count}.", updatedQuestions.Count);
 
             var newQuestions = newSpreadsheetQuestions
@@ -157,25 +118,6 @@ namespace Scraper
             newQuestions.ForEach(x => x.AddedDateTime = dateTimeNow);
             await _googleSpreadsheetClient.AddQuestionsAsync(newQuestions, companySheet.SheetId);
             _logger.LogInformation("Added questions: {count}.", newQuestions.Count);
-        }
-
-        private void EnsureNoDuplicates(List<SpreadsheetQuestion> questions)
-        {
-            var duplicates = questions.GroupBy(q => q.Id)
-                .Where(g => g.Count() > 1)
-                .ToList();
-
-            if (!duplicates.Any())
-                return;
-
-            foreach (var duplicateGroup in duplicates)
-            {
-                var duplicateQuestions = duplicateGroup.ToList();
-                _logger.LogError("Found duplicate questions with id {id}: {@duplicateQuestions}.", duplicateGroup.Key, duplicateQuestions);
-            }
-
-            throw new InvalidDataContractException(
-                $"Duplicated question found: {string.Join(',', duplicates.Select(d => d.Key))}.");
         }
 
         private void LogChangedQuestions(List<SpreadsheetQuestion> newSpreadsheetQuestions, Dictionary<string, SpreadsheetQuestion> oldSpreadsheetQuestionsDictionary)
@@ -198,14 +140,14 @@ namespace Scraper
                 return;
             }
 
-            foreach (var (delta, question) in changedQuestions.OrderByDescending(x => x.delta))
+            foreach (var changedQuestion in changedQuestions.OrderByDescending(x => x.delta))
             {
                 _logger.LogInformation(
                     "Changed question {value:+#;-#} {title} from {count1} to {count2}.",
-                    delta,
-                    question.Title,
-                    question.Frequency6Months - delta,
-                    question.Frequency6Months);
+                    changedQuestion.delta,
+                    changedQuestion.question.Title,
+                    changedQuestion.question.Frequency6Months - changedQuestion.delta,
+                    changedQuestion.question.Frequency6Months);
             }
         }
 
@@ -217,7 +159,7 @@ namespace Scraper
                     new
                     {
                         Question = x,
-                        Frequencies = frequencyDictionary[x.QuestionId]
+                        Frequencies = frequencyDictionary.TryGetValue(x.QuestionId, out var frequencies) ? frequencies : new double[4]
                     })
                 .Select(x =>
                     new SpreadsheetQuestion

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace LeetcodeApi.Models
 {
@@ -15,6 +16,12 @@ namespace LeetcodeApi.Models
         public string QuestionFrontendId { get; set; }
 
         public string Difficulty { get; set; }
+
+        public string SimilarQuestions { get; set; }
+
+        private List<QuestionReference> _similarQuestionsList;
+        public List<QuestionReference> SimilarQuestionsList
+            => _similarQuestionsList ??= JsonConvert.DeserializeObject<List<QuestionReference>>(SimilarQuestions);
 
         public List<TopicTag> TopicTags { get; set; }
     }

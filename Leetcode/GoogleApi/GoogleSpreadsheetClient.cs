@@ -9,22 +9,18 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace GoogleApi
 {
     public class GoogleSpreadsheetClient
     {
-        private readonly ILogger<GoogleSpreadsheetClient> _logger;
-        internal static readonly DateTime OriginDateTime = new(1899, 12, 30, 0, 0, 0, 0, DateTimeKind.Utc);
+        internal static readonly DateTime OriginDateTime = new DateTime(1899, 12, 30, 0, 0, 0, 0, DateTimeKind.Utc);
 
         private readonly ClientSecrets _clientSecrets;
         private readonly string _spreadsheetId;
 
-        public GoogleSpreadsheetClient(GoogleSpreadsheetClientConfiguration config,
-            ILogger<GoogleSpreadsheetClient> logger)
+        public GoogleSpreadsheetClient(GoogleSpreadsheetClientConfiguration config)
         {
-            _logger = logger;
             _clientSecrets = new ClientSecrets
             {
                 ClientId = config.ClientId,
@@ -61,19 +57,6 @@ namespace GoogleApi
             };
         }
 
-        public async Task<List<SpreadsheetQuestion>> LoadQuestionsAsync()
-        {
-            using var service = await CreateSheetsServiceAsync();
-
-            var request = service.Spreadsheets.Get(_spreadsheetId);
-            request.IncludeGridData = true;
-
-            var response = await request.ExecuteAsync();
-            var rowData = response.Sheets[0].Data[0].RowData;
-
-            return MapRowDataToSpreadsheetQuestions(rowData);
-        }
-
         private static List<SpreadsheetQuestion> MapRowDataToSpreadsheetQuestions(IList<RowData> rowData)
         {
             if (rowData == null)
@@ -82,7 +65,7 @@ namespace GoogleApi
             var rowNumber = 1;
             return rowData
                 .Skip(1)
-                .Where(x => x?.Values?.Count > 1)
+                .Where(x => x.Values?.Count > 1)
                 .Select(x =>
                     new SpreadsheetQuestion
                     {
@@ -103,6 +86,21 @@ namespace GoogleApi
                     })
                 .Where(x => !string.IsNullOrEmpty(x.Id))
                 .ToList();
+        }
+
+        public async Task<List<SpreadsheetQuestion>> LoadQuestionsAsync(int? companySheetIndex = null)
+        {
+            using var service = await CreateSheetsServiceAsync();
+
+            var request = service.Spreadsheets.Get(_spreadsheetId);
+            request.IncludeGridData = true;
+
+            var response = await request.ExecuteAsync();
+            var sheetIndex = companySheetIndex ?? 0;
+
+            var rowData = response.Sheets[sheetIndex].Data[0].RowData;
+
+            return MapRowDataToSpreadsheetQuestions(rowData);
         }
 
         public async Task AddQuestionsAsync(IList<SpreadsheetQuestion> questions, int? sheetId = null)
@@ -165,15 +163,28 @@ namespace GoogleApi
             await SendRequestAsync(service, request);
         }
 
-        public async IAsyncEnumerable<string> GetSheetNames()
+        public async Task SortRange()
         {
             using var service = await CreateSheetsServiceAsync();
 
-            var request = service.Spreadsheets.Get(_spreadsheetId);
+            var sortRequest = new SortRangeRequest
+            {
+                Range = new GridRange
+                {
+                    StartRowIndex = 1,
+                    EndRowIndex = int.MaxValue,
+                    StartColumnIndex = 0,
+                    EndColumnIndex = int.MaxValue
+                },
+                SortSpecs = new List<SortSpec>
+                {
+                    new SortSpec { DimensionIndex = 15, SortOrder = "ASCENDING" },
+                    new SortSpec { DimensionIndex = 5, SortOrder = "DESCENDING" },
+                }
+            };
 
-            var response = await request.ExecuteAsync();
-            foreach (var sheet in response.Sheets)
-                yield return sheet.Properties.Title;
+            var request = new Request { SortRange = sortRequest };
+            await SendRequestAsync(service, request);
         }
 
         private static RowData QuestionToRowData(SpreadsheetQuestion question)
@@ -190,23 +201,8 @@ namespace GoogleApi
             AddNumericCell(cells, question.FrequencyAllTime);
             AddFormulaCell(cells, question.Slug);
             AddTextCell(cells, question.Tags);
-
             if (question.AddedDateTime.HasValue)
                 AddDateTimeCell(cells, question.AddedDateTime.Value);
-            else
-                AddTextCell(cells, null);
-
-            if (question.LastSubmittedDateTime.HasValue)
-                AddDateTimeCell(cells, question.LastSubmittedDateTime.Value);          
-            else
-                AddTextCell(cells, null);
-
-
-            if (question.DuplicatesCount.HasValue)
-                AddNumericCell(cells, question.DuplicatesCount.Value);
-            else
-                AddTextCell(cells, null);
-
             return new RowData { Values = cells };
         }
 
@@ -255,48 +251,29 @@ namespace GoogleApi
             var initializer = new BaseClientService.Initializer
             {
                 HttpClientInitializer = credential,
-                ApplicationName = Assembly.GetEntryAssembly().GetName().Name
+                ApplicationName = Assembly.GetEntryAssembly()?.GetName().Name
             };
 
             return new SheetsService(initializer);
         }
 
-        private async Task<BatchUpdateSpreadsheetResponse> SendRequestAsync(SheetsService service, Request request)
+        private async Task SendRequestAsync(SheetsService service, Request request)
         {
             var batchUpdateSpreadsheetRequest = new BatchUpdateSpreadsheetRequest { Requests = new[] { request } };
             var batchUpdateRequest = service.Spreadsheets.BatchUpdate(batchUpdateSpreadsheetRequest, _spreadsheetId);
-            return await batchUpdateRequest.ExecuteAsync();
+            await batchUpdateRequest.ExecuteAsync();
         }
 
-        public async Task AddMergedView(CompanySheet companySheet)
+        public async Task<IEnumerable<string>> GetSheetNames()
         {
-            
             using var service = await CreateSheetsServiceAsync();
 
-            var request = new Request
-            {                
-                AddSheet =
-                {
-                    Properties =
-                    {
-                        Title = companySheet.Title,
-                    }
-                }
-            };
+            var request = service.Spreadsheets.Get(_spreadsheetId);
 
-            var response = await SendRequestAsync(service, request);
-            var addSheetResponse = response.Replies.OfType<AddSheetResponse>().FirstOrDefault();
+            //request.IncludeGridData = true;
 
-            if (addSheetResponse == null)
-            {
-                _logger.LogWarning("Couldn't get add sheet response.");
-                return;
-            }
-
-            var sheetId = addSheetResponse.Properties.SheetId;
-
+            var response = await request.ExecuteAsync();
+            return response.Sheets.Select(s => s.Properties.Title);
         }
-
-        
     }
 }

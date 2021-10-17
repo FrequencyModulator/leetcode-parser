@@ -5,13 +5,13 @@ namespace GoogleApi
 {
     public static class CellDataExtensions
     {
-        public static string GetTextValue(this RowData rowData, int index) => rowData.Values[index]?.UserEnteredValue?.StringValue;
+        public static string GetTextValue(this RowData rowData, int index) => rowData.Values?[index]?.UserEnteredValue?.StringValue;
 
-        public static int GetIntValue(this RowData rowData, int index) => (int)(rowData.Values[index].UserEnteredValue?.NumberValue ?? 0);
+        public static int GetIntValue(this RowData rowData, int index) => (int)(rowData.Values?[index].UserEnteredValue?.NumberValue ?? 0);
 
         public static DateTime? GetDateTimeValue(this RowData rowData, int index)
         {
-            if (index >= rowData.Values.Count)
+            if (rowData.Values == null || index >= rowData.Values.Count)
                 return null;
             var numValue = rowData.Values[index]?.UserEnteredValue?.NumberValue;
             if (!numValue.HasValue)
