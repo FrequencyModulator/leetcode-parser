@@ -122,7 +122,7 @@ namespace Scraper
 
         private void LogChangedQuestions(List<SpreadsheetQuestion> newSpreadsheetQuestions, Dictionary<string, SpreadsheetQuestion> oldSpreadsheetQuestionsDictionary)
         {
-            var changedQuestions = new List<(int delta, SpreadsheetQuestion question)>();
+            var changedQuestions = new List<(double delta, SpreadsheetQuestion question)>();
             foreach (var question in newSpreadsheetQuestions)
             {
                 if (oldSpreadsheetQuestionsDictionary.TryGetValue(question.Id, out var oldQuestion))
@@ -169,10 +169,14 @@ namespace Scraper
                         Title = x.Question.Title,
                         Difficulty = x.Question.Difficulty,
                         Status = x.Question.Status,
-                        Frequency6Months = (int)x.Frequencies[0],
-                        Frequency1Year = (int)x.Frequencies[1],
-                        Frequency2Years = (int)x.Frequencies[2],
-                        FrequencyAllTime = (int)x.Frequencies[3],
+                        Frequency6Months = x.Frequencies[0],
+                        Frequency1Year = x.Frequencies[1],
+                        Frequency2Years = x.Frequencies[2],
+                        FrequencyAllTime = x.Frequencies[3],
+                        CalculatedFrequency6Months = x.Frequencies[4],
+                        CalculatedFrequency1Year = x.Frequencies[5],
+                        CalculatedFrequency2Years = x.Frequencies[6],
+                        CalculatedFrequencyAllTime = x.Frequencies[7],
                         Slug = string.Format(HyperlinkSlug, x.Question.TitleSlug),
                         Tags = string.Join(", ", x.Question.TopicTags.Select(y => y.Name))
                     })

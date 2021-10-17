@@ -16,13 +16,17 @@ namespace GoogleApi
 
         public string Status { get; set; }
 
-        public int Frequency6Months { get; set; }
+        public double Frequency6Months { get; set; }
 
-        public int Frequency1Year { get; set; }
+        public double Frequency1Year { get; set; }
 
-        public int Frequency2Years { get; set; }
+        public double Frequency2Years { get; set; }
 
-        public int FrequencyAllTime { get; set; }
+        public double FrequencyAllTime { get; set; }
+        public double CalculatedFrequency6Months { get; set; }
+        public double CalculatedFrequency1Year { get; set; }
+        public double CalculatedFrequency2Years { get; set; }
+        public double CalculatedFrequencyAllTime { get; set; }
 
         public string Slug { get; set; }
 

@@ -9,6 +9,8 @@ namespace GoogleApi
 
         public static int GetIntValue(this RowData rowData, int index) => (int)(rowData.Values?[index].UserEnteredValue?.NumberValue ?? 0);
 
+        public static double GetDoubleValue(this RowData rowData, int index) => (double)(rowData.Values?[index].UserEnteredValue?.NumberValue ?? 0);
+
         public static DateTime? GetDateTimeValue(this RowData rowData, int index)
         {
             if (rowData.Values == null || index >= rowData.Values.Count)

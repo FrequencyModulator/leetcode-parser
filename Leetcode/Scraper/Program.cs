@@ -38,7 +38,7 @@ namespace Scraper
 
             await scraper.UpdateAllCompanySheetsQuestionsAsync();
             
-            //await scraper.UpdateAllLastSubmittedAsync();
+            await scraper.UpdateAllLastSubmittedAsync();
 
             //Log.Information("Leetcode scraper finished");
         }
