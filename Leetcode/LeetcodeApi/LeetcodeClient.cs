@@ -36,58 +36,58 @@ namespace LeetcodeApi
 
         public async Task<CompanyTag> LoadCompanyTagAsync(string companySlug)
         {
-            const string Query = @"query getCompanyTag($slug: String!) {  
-                                        companyTag(slug: $slug) {    
-                                            name    
-                                            questions {      
-                                                ...questionFields      
+            const string Query = @"query getCompanyTag($slug: String!) {
+                                        companyTag(slug: $slug) {
+                                            name
+                                            questions {
+                                                ...questionFields
                                                 __typename
-                                            }    
-                                            frequencies    
+                                            }
+                                            frequencies
                                             __typename
-                                        }  
-                                        favoritesLists {    
-                                            publicFavorites {      
-                                                ...favoriteFields      
+                                        }
+                                        favoritesLists {
+                                            publicFavorites {
+                                                ...favoriteFields
                                                 __typename
-                                            }    privateFavorites {      
-                                                ...favoriteFields      
+                                            }    privateFavorites {
+                                                ...favoriteFields
                                                 __typename
                                             }    __typename
                                         }
                                     }
-                                    fragment favoriteFields on FavoriteNode {  
-                                        idHash  
-                                        id  
-                                        name  
-                                        isPublicFavorite  
-                                        viewCount  
-                                        creator  
-                                        isWatched  
-                                        questions {    
-                                            questionId    
-                                            title    
-                                            titleSlug    
+                                    fragment favoriteFields on FavoriteNode {
+                                        idHash
+                                        id
+                                        name
+                                        isPublicFavorite
+                                        viewCount
+                                        creator
+                                        isWatched
+                                        questions {
+                                            questionId
+                                            title
+                                            titleSlug
                                             __typename
-                                        }  
+                                        }
                                         __typename
                                     }
-                                    fragment questionFields on QuestionNode {  
-                                        status  
-                                        questionId  
-                                        questionFrontendId  
-                                        title  
-                                        titleSlug  
-                                        translatedTitle  
-                                        stats  
-                                        difficulty  
-                                        isPaidOnly  
-                                        topicTags {    
-                                            name    
-                                            translatedName    
-                                            slug    
+                                    fragment questionFields on QuestionNode {
+                                        status
+                                        questionId
+                                        questionFrontendId
+                                        title
+                                        titleSlug
+                                        translatedTitle
+                                        stats
+                                        difficulty
+                                        isPaidOnly
+                                        topicTags {
+                                            name
+                                            translatedName
+                                            slug
                                             __typename
-                                        }  
+                                        }
                                         __typename
                                     }";
 
