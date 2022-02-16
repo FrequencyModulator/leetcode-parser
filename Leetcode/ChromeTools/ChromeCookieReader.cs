@@ -55,7 +55,8 @@ namespace ChromeTools
 
         private static string GetConnectionString(string userDataPath)
         {
-            var dbPath = Path.Combine(userDataPath, @"Default\Network\Cookies");
+            //var dbPath = Path.Combine(userDataPath, @"Default\Network\Cookies");
+            var dbPath = Path.Combine(userDataPath, @"Profile 1\Network\Cookies");
             if (!File.Exists(dbPath))
                 throw new FileNotFoundException("Can't find cookie store.", dbPath);
 
