@@ -30,12 +30,12 @@ namespace GoogleApi
             _spreadsheetId = config.SpreadsheetId;
         }
 
-        public async Task<CompanySheet> LoadCompanySheet(string company)
+        public async Task<CompanySheet> LoadCompanySheet(string company, bool withData = true)
         {
             using var service = await CreateSheetsServiceAsync();
 
             var request = service.Spreadsheets.Get(_spreadsheetId);
-            request.IncludeGridData = true;
+            request.IncludeGridData = withData;
             var response = await request.ExecuteAsync();
 
             var companySheet = response
@@ -53,7 +53,7 @@ namespace GoogleApi
                 Title = companySheet.Properties.Title,
                 Index = companySheet.Properties.Index,
                 SheetId = companySheet.Properties.SheetId,
-                Questions = MapRowDataToSpreadsheetQuestions(companySheet.Data[0].RowData)
+                Questions = withData ? MapRowDataToSpreadsheetQuestions(companySheet.Data[0].RowData) : null
             };
         }
 
@@ -79,14 +79,10 @@ namespace GoogleApi
                         Frequency1Year = x.GetIntValue(6),
                         Frequency2Years = x.GetIntValue(7),
                         FrequencyAllTime = x.GetIntValue(8),
-                        CalculatedFrequency6Months = x.GetDoubleValue(9),
-                        CalculatedFrequency1Year = x.GetDoubleValue(10),
-                        CalculatedFrequency2Years = x.GetDoubleValue(11),
-                        CalculatedFrequencyAllTime = x.GetDoubleValue(12),
-                        Slug = x.GetTextValue(13),
-                        Tags = x.GetTextValue(14),
-                        AddedDateTime = x.GetDateTimeValue(15),
-                        LastSubmittedDateTime = x.GetDateTimeValue(16)
+                        Slug = x.GetTextValue(9),
+                        Tags = x.GetTextValue(10),
+                        AddedDateTime = x.GetDateTimeValue(11),
+                        LastSubmittedDateTime = x.GetDateTimeValue(12)
                     })
                 .Where(x => !string.IsNullOrEmpty(x.Id))
                 .ToList();
@@ -143,6 +139,34 @@ namespace GoogleApi
             await SendRequestAsync(service, request);
         }
 
+        public async Task DeleteDuplicates(int? sheetId)
+        {
+            using var service = await CreateSheetsServiceAsync();
+
+            var deleteDuplicatesRequest = new DeleteDuplicatesRequest
+            {
+                ComparisonColumns = new List<DimensionRange> 
+                {
+                    new DimensionRange 
+                    {
+                        Dimension = "COLUMNS",
+                        SheetId = sheetId,
+                        StartIndex = 0,
+                        EndIndex = 2
+                    }
+                },
+                Range = new GridRange
+                {
+                    StartRowIndex = 1,
+                    EndRowIndex = int.MaxValue,
+                    SheetId=sheetId
+                }
+            };
+
+            var request = new Request { DeleteDuplicates = deleteDuplicatesRequest };
+            await SendRequestAsync(service, request);
+        }
+
         public async Task UpdateLastSubmittedDateTime(int rowIndex, DateTime lastSubmittedDateTime, int? sheetId = null)
         {
             using var service = await CreateSheetsServiceAsync();
@@ -158,7 +182,7 @@ namespace GoogleApi
                 Fields = "*",
                 Start = new GridCoordinate
                 {
-                    ColumnIndex = 16,
+                    ColumnIndex = 12,
                     RowIndex = rowIndex,
                     SheetId = sheetId
                 }
@@ -203,10 +227,6 @@ namespace GoogleApi
             AddNumericCell(cells, question.Frequency1Year);
             AddNumericCell(cells, question.Frequency2Years);
             AddNumericCell(cells, question.FrequencyAllTime);
-            AddNumericCell(cells, question.CalculatedFrequency6Months);
-            AddNumericCell(cells, question.CalculatedFrequency1Year);
-            AddNumericCell(cells, question.CalculatedFrequency2Years);
-            AddNumericCell(cells, question.CalculatedFrequencyAllTime);
             AddFormulaCell(cells, question.Slug);
             AddTextCell(cells, question.Tags);
             if (question.AddedDateTime.HasValue)

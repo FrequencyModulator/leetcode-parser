@@ -90,9 +90,13 @@ namespace Scraper
         public async Task UpdateQuestionsAsync(string company)
         {
             _logger.LogInformation("Loading {company} questions.", company);
-            var companySheet = await _googleSpreadsheetClient.LoadCompanySheet(company);
+            var companySheet = await _googleSpreadsheetClient.LoadCompanySheet(company, false);
+            await _googleSpreadsheetClient.DeleteDuplicates(companySheet.SheetId);
+
+            companySheet = await _googleSpreadsheetClient.LoadCompanySheet(company);
             var oldSpreadsheetQuestions = companySheet.Questions;
-            var test = oldSpreadsheetQuestions.Where(x => x.Id == "1781");
+            
+            
             var oldSpreadsheetQuestionsDictionary = oldSpreadsheetQuestions.Distinct().ToDictionary(x => x.Id);
 
             var companyTag = await _leetcodeClient.LoadCompanyTagAsync(company);
@@ -173,10 +177,6 @@ namespace Scraper
                         Frequency1Year = x.Frequencies[1],
                         Frequency2Years = x.Frequencies[2],
                         FrequencyAllTime = x.Frequencies[3],
-                        CalculatedFrequency6Months = x.Frequencies[4],
-                        CalculatedFrequency1Year = x.Frequencies[5],
-                        CalculatedFrequency2Years = x.Frequencies[6],
-                        CalculatedFrequencyAllTime = x.Frequencies[7],
                         Slug = string.Format(HyperlinkSlug, x.Question.TitleSlug),
                         Tags = string.Join(", ", x.Question.TopicTags.Select(y => y.Name))
                     })
