@@ -53,7 +53,8 @@ namespace LeetcodeApi
                                             }    privateFavorites {
                                                 ...favoriteFields
                                                 __typename
-                                            }    __typename
+                                            }    
+                                            __typename
                                         }
                                     }
                                     fragment favoriteFields on FavoriteNode {

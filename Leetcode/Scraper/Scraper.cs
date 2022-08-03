@@ -42,6 +42,7 @@ namespace Scraper
         public async Task UpdateLastSubmittedAsync(string company)
         {
             _logger.LogInformation("Updating last submitted dates for {company}.", company);
+            await DeduplicateQuestions(company);
             var companySheet = await _googleSpreadsheetClient.LoadCompanySheet(company);
             var spreadsheetQuestions = companySheet.Questions;
             var lastSyncSubmissionDateTime = spreadsheetQuestions.Max(x => x.LastSubmittedDateTime) ?? DateTime.Now.AddMonths(-4);
@@ -87,13 +88,18 @@ namespace Scraper
                 await UpdateQuestionsAsync(company);
         }
 
+        private async Task DeduplicateQuestions(string company)
+        {
+            var companySheet = await _googleSpreadsheetClient.LoadCompanySheet(company, false);
+            await _googleSpreadsheetClient.DeleteDuplicates(companySheet.SheetId);
+        }
+
         public async Task UpdateQuestionsAsync(string company)
         {
             _logger.LogInformation("Loading {company} questions.", company);
-            var companySheet = await _googleSpreadsheetClient.LoadCompanySheet(company, false);
-            await _googleSpreadsheetClient.DeleteDuplicates(companySheet.SheetId);
+            await DeduplicateQuestions(company);
 
-            companySheet = await _googleSpreadsheetClient.LoadCompanySheet(company);
+            var companySheet = await _googleSpreadsheetClient.LoadCompanySheet(company);
             var oldSpreadsheetQuestions = companySheet.Questions;
             
             
