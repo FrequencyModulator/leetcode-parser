@@ -85,7 +85,10 @@ namespace Scraper
         {
             var companies = await _companyProvider.GetCompanies();
             foreach (var company in companies)
-                await UpdateQuestionsAsync(company);
+                if (!company.StartsWith("Custom"))
+                {
+                    await UpdateQuestionsAsync(company);
+                }
         }
 
         private async Task DeduplicateQuestions(string company)
