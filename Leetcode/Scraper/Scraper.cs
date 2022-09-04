@@ -36,7 +36,12 @@ namespace Scraper
         {
             var companies = await _companyProvider.GetCompanies();
             foreach (var company in companies)
-                await UpdateLastSubmittedAsync(company);
+            {
+                if (!company.StartsWith("Custom"))
+                {
+                    await UpdateLastSubmittedAsync(company);
+                }
+            }
         }
 
         public async Task UpdateLastSubmittedAsync(string company)
