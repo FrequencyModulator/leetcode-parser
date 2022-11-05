@@ -23,6 +23,10 @@ namespace GoogleApi
         public double Frequency2Years { get; set; }
 
         public double FrequencyAllTime { get; set; }
+        
+        public double CalculatedFrequency6Months { get; set; }
+
+        public string Paid { get; set; }
 
         public string Slug { get; set; }
 

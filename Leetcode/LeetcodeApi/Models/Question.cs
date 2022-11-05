@@ -17,6 +17,8 @@ namespace LeetcodeApi.Models
 
         public string Difficulty { get; set; }
 
+        public bool IsPaidOnly { get; set; }
+
         public string SimilarQuestions { get; set; }
 
         private List<QuestionReference> _similarQuestionsList;

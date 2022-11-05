@@ -79,10 +79,12 @@ namespace GoogleApi
                         Frequency1Year = x.GetIntValue(6),
                         Frequency2Years = x.GetIntValue(7),
                         FrequencyAllTime = x.GetIntValue(8),
-                        Slug = x.GetTextValue(9),
-                        Tags = x.GetTextValue(10),
-                        AddedDateTime = x.GetDateTimeValue(11),
-                        LastSubmittedDateTime = x.GetDateTimeValue(12)
+                        CalculatedFrequency6Months = x.GetDoubleValue(9),
+                        Paid = x.GetTextValue(10),
+                        Slug = x.GetTextValue(11),
+                        Tags = x.GetTextValue(12),
+                        AddedDateTime = x.GetDateTimeValue(13),
+                        LastSubmittedDateTime = x.GetDateTimeValue(14)
                     })
                 .Where(x => !string.IsNullOrEmpty(x.Id))
                 .ToList();
@@ -227,6 +229,8 @@ namespace GoogleApi
             AddNumericCell(cells, question.Frequency1Year);
             AddNumericCell(cells, question.Frequency2Years);
             AddNumericCell(cells, question.FrequencyAllTime);
+            AddNumericCell(cells, question.CalculatedFrequency6Months);
+            AddTextCell(cells, question.Paid);
             AddFormulaCell(cells, question.Slug);
             AddTextCell(cells, question.Tags);
             if (question.AddedDateTime.HasValue)

@@ -191,6 +191,8 @@ namespace Scraper
                         Frequency1Year = x.Frequencies[1],
                         Frequency2Years = x.Frequencies[2],
                         FrequencyAllTime = x.Frequencies[3],
+                        Paid = x.Question.IsPaidOnly ? "Y" : "",
+                        CalculatedFrequency6Months = x.Frequencies[4],
                         Slug = string.Format(HyperlinkSlug, x.Question.TitleSlug),
                         Tags = string.Join(", ", x.Question.TopicTags.Select(y => y.Name))
                     })
