@@ -184,7 +184,7 @@ namespace GoogleApi
                 Fields = "*",
                 Start = new GridCoordinate
                 {
-                    ColumnIndex = 12,
+                    ColumnIndex = 14,
                     RowIndex = rowIndex,
                     SheetId = sheetId
                 }

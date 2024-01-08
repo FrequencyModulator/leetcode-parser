@@ -24,35 +24,13 @@ namespace Scraper
 
             Log.Information("Leetcode scraper started");
             var serviceProvider = BuildServiceProvider();
-            
-            //var client = serviceProvider.GetService<GoogleSpreadsheetClient>();
-
-            //var names = await client.GetSheetNames();
-
-            //foreach (var name in names)
-            //{
-            //    Console.WriteLine(name);
-            //}
 
             var scraper = serviceProvider.GetRequiredService<Scraper>();
 
             await scraper.UpdateAllCompanySheetsQuestionsAsync();
             
-            //await scraper.UpdateAllLastSubmittedAsync();
-
-            //Log.Information("Leetcode scraper finished");
+            await scraper.UpdateAllLastSubmittedAsync();
         }
-
-        //private static CommandLineBuilder BuildCommandLine()
-        //{
-        //    var root = new RootCommand(@"$ dotnet run --name 'Joe'"){
-        //        new Option<string>("--name"){
-        //            IsRequired = true
-        //        }
-        //    };
-        //    root.Handler = CommandHandler.Create<GreeterOptions, IHost>(Run);
-        //    return new CommandLineBuilder(root);
-        //}
 
         public static ServiceProvider BuildServiceProvider()
         {
@@ -72,8 +50,6 @@ namespace Scraper
                 var config = Configuration.GetSection("LeetcodeApi").Get<LeetcodeClientConfiguration>();
                 return new LeetcodeClient(config);
             });
-
-            //services.AddSingleton<ICompanyProvider, ConfigurationCompanyProvider>();
 
             services.AddSingleton<ICompanyProvider, SheetTitleCompanyProvider>();
             services.AddSingleton<Scraper>();
