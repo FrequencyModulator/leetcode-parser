@@ -29,7 +29,7 @@ namespace Scraper
 
             await scraper.UpdateAllCompanySheetsQuestionsAsync();
             
-            await scraper.UpdateAllLastSubmittedAsync();
+            //await scraper.UpdateAllLastSubmittedAsync();
         }
 
         public static ServiceProvider BuildServiceProvider()

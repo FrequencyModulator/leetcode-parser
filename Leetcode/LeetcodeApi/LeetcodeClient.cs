@@ -1,6 +1,7 @@
 ﻿using ChromeTools;
 using LeetcodeApi.Models;
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -30,9 +31,10 @@ namespace LeetcodeApi
 
         public async Task<CompanyTag> LoadCompanyTagAsync(string companySlug)
         {
-            using var client = CreateHttpClient();
-            var response = await client.GetAsync("https://leetcode.com/problems/tag-data/company-tags/" + companySlug + "/");
-            var responseContent = await response.Content.ReadAsStringAsync();
+            //using var client = CreateHttpClient();
+            //var response = await client.GetAsync("https://leetcode.com/problems/tag-data/company-tags/" + companySlug + "/");
+            //var responseContent = await response.Content.ReadAsStringAsync();
+            var responseContent = File.ReadAllText($"JsonFiles/{companySlug}.json");
             return JsonSerializer.Deserialize<CompanyTag>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
 
